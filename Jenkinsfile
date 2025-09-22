@@ -1,5 +1,12 @@
 pipeline {
-   agent any
+    agent {
+    docker {
+      // Imagen personalizada que tenga Maven + Docker + Kubectl
+      image 'israel442/maven-docker-kubectl:latest'
+      // Montar el socket de Docker para poder usar "docker build"
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
+    }
+  }
 
    environment {
      // You must set the following environment variables
