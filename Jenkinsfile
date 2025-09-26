@@ -1,46 +1,57 @@
- pipeline {
+pipeline {
     agent {
-    docker {
-      // Imagen personalizada que tenga Maven + Docker + Kubectl
-      image 'israel442/maven-docker-kubectl:latest'
-      // Montar el socket de Docker para poder usar "docker build"
-      args '-v /var/run/docker.sock:/var/run/docker.sock'
+        docker {
+            // Imagen personalizada que contenga Maven + Docker + Kubectl
+            image 'israel442/maven-docker-kubectl:latest'
+            // Montar el socket de Docker del host para poder usar docker build/push
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
     }
-  }
 
-   environment {
-     // You must set the following environment variables
-     // ORGANIZATION_NAME
-     // YOUR_DOCKERHUB_USERNAME (it doesn't matter if you don't have one)
+    environment {
+        SERVICE_NAME = "fleetman-api-gateway"
+        // Asegúrate de definir estas variables en Jenkins
+        // Global Environment Variables o Pipeline Parameters
+        REPOSITORY_TAG = "${YOUR_DOCKERHUB_USERNAME}/${ORGANIZATION_NAME}-${SERVICE_NAME}:${BUILD_ID}"
+    }
 
-     SERVICE_NAME = "fleetman-api-gateway"
-     REPOSITORY_TAG="${YOUR_DOCKERHUB_USERNAME}/${ORGANIZATION_NAME}-${SERVICE_NAME}:${BUILD_ID}"
-   }
+    stages {
+        stage('Preparation') {
+            steps {
+                // Limpiar workspace antes de iniciar
+                cleanWs()
+                // Clonar código desde SCM
+                checkout scm
+            }
+        }
 
-   stages {
-      stage('Preparation') {
-         steps {
-            cleanWs()
-            checkout scm
-            //git credentialsId: 'GitHub', url: "https://github.com/${ORGANIZATION_NAME}/${SERVICE_NAME}"
-         }
-      }
-      stage('Build') {
-         steps {
-            sh '''mvn clean package'''
-         }
-      }
+        stage('Build') {
+            steps {
+                // Compilar con Maven
+                sh 'mvn clean package'
+            }
+        }
 
-      stage('Build and Push Image') {
-         steps {
-           sh 'docker image build -t ${REPOSITORY_TAG} .'
-         }
-      }
+        stage('Build and Push Image') {
+            steps {
+                // Construir imagen Docker usando socket del host
+                sh 'docker build -t ${REPOSITORY_TAG} .'
+                // Optional: hacer push si quieres subir a DockerHub
+                // sh 'docker push ${REPOSITORY_TAG}'
+            }
+        }
 
-      stage('Deploy to Cluster') {
-          steps {
-                    sh 'envsubst < ${WORKSPACE}/deploy.yaml | kubectl apply -f -'
-          }
-      }
-   }
+        stage('Deploy to Cluster') {
+            steps {
+                // Desplegar en tu cluster local
+                sh 'envsubst < ${WORKSPACE}/deploy.yaml | kubectl apply -f -'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finalizado, limpieza opcional si es necesario."
+        }
+    }
 }
