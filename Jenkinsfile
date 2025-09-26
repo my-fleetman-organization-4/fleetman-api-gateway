@@ -1,11 +1,7 @@
 pipeline {
     agent {
         docker {
-            // Imagen personalizada que contenga Maven + Docker + Kubectl
-            image 'israel442/maven-docker-kubectl:latest'
-            // Montar el socket de Docker del host para poder usar docker build/push
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
+            label 'jenkins-agent-docker'
     }
 
     environment {
