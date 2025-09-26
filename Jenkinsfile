@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        docker {
+      
             label 'jenkins-agent-docker'
     }
 
@@ -51,4 +51,4 @@ pipeline {
         }
     }
 }
-}
+
