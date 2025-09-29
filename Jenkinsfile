@@ -1,6 +1,31 @@
 pipeline {
-   agent any
-
+   //agent any
+   agent{
+     kubernetes {
+               yaml '''
+   apiVersion: v1
+   kind: Pod
+   spec:
+     containers:
+     - name: jnlp
+       image: jenkins/inbound-agent:3341.v0766d82b_dec0-1
+       args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
+       volumeMounts:
+       - mountPath: /home/jenkins/agent
+         name: workspace-volume
+     - name: maven
+       image: maven:3.8.6-openjdk-11
+       command: ['cat']
+       tty: true
+       volumeMounts:
+       - mountPath: /home/jenkins/agent
+         name: workspace-volume
+     volumes:
+     - name: workspace-volume
+       emptyDir: {}
+   '''
+           }
+   }
    environment {
      // You must set the following environment variables
      // ORGANIZATION_NAME
