@@ -1,44 +1,83 @@
 pipeline {
-   agent any
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins/jenkins-jenkins-agent: "true"
+spec:
+  containers:
+  - name: maven
+    image: maven:3.9.2-openjdk-21
+    command:
+    - cat
+    tty: true
+  - name: kubectl
+    image: bitnami/kubectl:1.30
+    command:
+    - cat
+    tty: true
+  - name: docker
+    image: docker:24.0.5-cli
+    command:
+    - cat
+    tty: true
+  volumes:
+  - name: workspace-volume
+    emptyDir: {}
+"""
+        }
+    }
 
-   environment {
-     // You must set the following environment variables
-     // ORGANIZATION_NAME
-     // YOUR_DOCKERHUB_USERNAME (it doesn't matter if you don't have one)
+    environment {
+        // Variables de ejemplo, ajusta según tu cluster
+        KUBECONFIG = '/home/jenkins/.kube/config'
+    }
 
-     SERVICE_NAME = "fleetman-api-gateway"
-     REPOSITORY_TAG="${YOUR_DOCKERHUB_USERNAME}/${ORGANIZATION_NAME}-${SERVICE_NAME}:${BUILD_ID}"
-   }
+    stages {
 
-   stages {
-               stage('Clean Workspace') {
-             steps {
-                 deleteDir()
-             }
-         }
-      stage('Preparation') {
-         steps {
-            
-            git credentialsId: 'GitHub', url: "https://github.com/${ORGANIZATION_NAME}/${SERVICE_NAME}"
-         }
-      }
-      stage('Build') {
-         steps {
-            sh '''mvn clean package'''
-         }
-      }
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
 
-      stage('Build and Push Image') {
-         steps {
-           sh 'docker image build -t ${REPOSITORY_TAG} .'
-         }
-      }
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/my-fleetman-organization-4/fleetman-api-gateway', branch: 'master', credentialsId: 'GitHub'
+            }
+        }
 
-      stage('Deploy to Cluster') {
-          steps {
-                    sh 'envsubst < ${WORKSPACE}/deploy.yaml | kubectl apply -f -'
-          }
-      }
-   }
+        stage('Build') {
+            steps {
+                container('maven') {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                container('docker') {
+                    sh '''
+                    docker build -t myregistry/my-app:latest .
+                    docker push myregistry/my-app:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Cluster') {
+            steps {
+                container('kubectl') {
+                    sh '''
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl rollout status deployment/my-app -n my-namespace
+                    '''
+                }
+            }
+        }
+    }
 }
-
