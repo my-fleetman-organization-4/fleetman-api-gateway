@@ -1,8 +1,6 @@
 pipeline {
    agent any
-   agent{
 
-   }
    environment {
      // You must set the following environment variables
      // ORGANIZATION_NAME
