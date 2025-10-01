@@ -1,35 +1,8 @@
 pipeline {
-    agent {
-        kubernetes {
-            yaml """
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    jenkins/jenkins-jenkins-agent: "true"
-spec:
-  containers:
-  - name: maven
-    image: maven:3.9.2-openjdk-21
-    command:
-    - cat
-    tty: true
-  - name: kubectl
-    image: bitnami/kubectl:1.30
-    command:
-    - cat
-    tty: true
-  - name: docker
-    image: docker:24.0.5-cli
-    command:
-    - cat
-    tty: true
-  volumes:
-  - name: workspace-volume
-    emptyDir: {}
-"""
-        }
-    }
+    
+
+        
+    
 
     environment {
         // Variables de ejemplo, ajusta según tu cluster
