@@ -13,7 +13,7 @@ pipeline {
    stages {
       stage('Preparation') {
          steps {
-            cleanWs()
+            deleteDir() 
             git credentialsId: 'GitHub', url: "https://github.com/${ORGANIZATION_NAME}/${SERVICE_NAME}"
          }
       }
