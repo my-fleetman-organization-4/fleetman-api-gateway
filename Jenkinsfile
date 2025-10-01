@@ -1,56 +1,38 @@
 pipeline {
-    
+   agent any
 
-        
-    
+   environment {
+     // You must set the following environment variables
+     // ORGANIZATION_NAME
+     // YOUR_DOCKERHUB_USERNAME (it doesn't matter if you don't have one)
 
-    environment {
-        // Variables de ejemplo, ajusta según tu cluster
-        KUBECONFIG = '/home/jenkins/.kube/config'
-    }
+     SERVICE_NAME = "fleetman-api-gateway"
+     REPOSITORY_TAG="${YOUR_DOCKERHUB_USERNAME}/${ORGANIZATION_NAME}-${SERVICE_NAME}:${BUILD_ID}"
+   }
 
-    stages {
+   stages {
+      stage('Preparation') {
+         steps {
+            cleanWs()
+            git credentialsId: 'GitHub', url: "https://github.com/${ORGANIZATION_NAME}/${SERVICE_NAME}"
+         }
+      }
+      stage('Build') {
+         steps {
+            sh '''mvn clean package'''
+         }
+      }
 
-        stage('Clean Workspace') {
-            steps {
-                deleteDir()
-            }
-        }
+      stage('Build and Push Image') {
+         steps {
+           sh 'docker image build -t ${REPOSITORY_TAG} .'
+         }
+      }
 
-        stage('Checkout') {
-            steps {
-                git url: 'https://github.com/my-fleetman-organization-4/fleetman-api-gateway', branch: 'master', credentialsId: 'GitHub'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                container('maven') {
-                    sh 'mvn clean package'
-                }
-            }
-        }
-
-        stage('Build & Push Docker Image') {
-            steps {
-                container('docker') {
-                    sh '''
-                    docker build -t myregistry/my-app:latest .
-                    docker push myregistry/my-app:latest
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy to Cluster') {
-            steps {
-                container('kubectl') {
-                    sh '''
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl rollout status deployment/my-app -n my-namespace
-                    '''
-                }
-            }
-        }
-    }
+      stage('Deploy to Cluster') {
+          steps {
+                    sh 'envsubst < ${WORKSPACE}/deploy.yaml | kubectl apply -f -'
+          }
+      }
+   }
 }
