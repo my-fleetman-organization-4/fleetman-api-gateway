@@ -37,6 +37,7 @@ pipeline {
                      sh 'mvn -v'
                      sh 'mvn clean package'
           }
+          }
        }
  
        stage('Build and Push Image') {
@@ -52,4 +53,4 @@ pipeline {
        }
     }
  }
-}
+
