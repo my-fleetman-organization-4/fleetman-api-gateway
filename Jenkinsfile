@@ -1,6 +1,6 @@
 pipeline {
  agent {
-        kubernetes {
+                kubernetes {
             yaml """
 apiVersion: v1
 kind: Pod
@@ -12,16 +12,6 @@ spec:
     - cat
     tty: true
 """
-        }
-    }
-    stages {
-        stage('Build') {
-            steps {
-                container('maven') {
-                    sh 'mvn -v'       // verifica que Maven esté instalado
-                    sh 'mvn clean package'
-                }
-            }
         }
     }
 
