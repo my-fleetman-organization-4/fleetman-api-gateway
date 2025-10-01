@@ -11,6 +11,13 @@ pipeline {
      command:
      - cat
      tty: true
+         volumeMounts:
+      - name: docker-sock
+        mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
  """
          }
      }
@@ -42,13 +49,18 @@ pipeline {
  
        stage('Build and Push Image') {
           steps {
-            sh 'docker image build -t ${REPOSITORY_TAG} .'
+                container('maven') {
+                    sh 'docker image build -t ${REPOSITORY_TAG} .'
+                    sh 'docker push ${REPOSITORY_TAG}'
+                }
           }
        }
  
        stage('Deploy to Cluster') {
            steps {
-                     sh 'envsubst < ${WORKSPACE}/deploy.yaml | kubectl apply -f -'
+                container('maven') {
+                    sh 'envsubst < ${WORKSPACE}/deploy.yaml | kubectl apply -f -'
+                }
            }
        }
     }
