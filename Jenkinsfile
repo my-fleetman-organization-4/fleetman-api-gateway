@@ -10,7 +10,7 @@ kind: Pod
 spec:
   containers:
   - name: maven
-    image: maven:3.9.4-eclipse-temurin-21
+    image: image: israel452/maven-docker:1.0
     command:
     - cat
     tty: true
