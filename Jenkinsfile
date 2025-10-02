@@ -8,6 +8,8 @@ pipeline {
 apiVersion: v1
 kind: Pod
 spec:
+spec:
+  serviceAccountName: jenkins-sa
   containers:
   - name: maven
     image:  israel452/maven-docker:2.0
