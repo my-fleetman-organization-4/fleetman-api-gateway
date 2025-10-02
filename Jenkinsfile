@@ -10,7 +10,7 @@ kind: Pod
 spec:
   containers:
   - name: maven
-    image:  israel452/maven-docker:1.0
+    image:  israel452/maven-docker:2.0
     command:
     - cat
     tty: true
