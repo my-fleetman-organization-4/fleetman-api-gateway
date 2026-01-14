@@ -1,7 +1,7 @@
 pipeline {
-  agent {
-    kubernetes {
-      yaml """
+agent {
+  kubernetes {
+    yaml """
 apiVersion: v1
 kind: Pod
 spec:
@@ -14,7 +14,7 @@ spec:
 
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
-    command: ["cat"]
+    command: ["/busybox/cat"]
     tty: true
     volumeMounts:
     - name: docker-config
@@ -25,8 +25,9 @@ spec:
     secret:
       secretName: dockerhub-secret
 """
-    }
   }
+}
+
 
   environment {
     SERVICE_NAME = "fleetman-api-gateway"
