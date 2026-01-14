@@ -19,6 +19,13 @@ spec:
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    command: ["cat"]
+    tty: true
+    volumeMounts:
+    - name: docker-config
+      mountPath: /kaniko/.docker
   volumes:
   - name: docker-sock
     hostPath:
@@ -55,13 +62,13 @@ spec:
  
        stage('Build and Push Image') {
             steps {
-               container('maven') {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                  sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker image build -t ${REPOSITORY_TAG} .
-                    docker push ${REPOSITORY_TAG}
-                  '''
+                  container('kaniko') {
+                    sh """
+                      /kaniko/executor \
+                      --context ${WORKSPACE} \
+                      --dockerfile ${WORKSPACE}/Dockerfile \
+                      --destination ${REPOSITORY_TAG}
+                    """
                 }
             }
          }
